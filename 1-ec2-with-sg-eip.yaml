@@ -5,7 +5,7 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       AvailabilityZone: us-east-1a
-      ImageId: ami-a4c7edb2
+      ImageId: ami-06878d265978313ca
       InstanceType: t2.micro
       KeyName: private.pem     # <-- Change to use your key-pair name
       SecurityGroups:
