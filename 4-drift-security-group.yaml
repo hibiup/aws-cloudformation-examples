@@ -1,4 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
+Description: A simple EC2 instance
+---
 Parameters:
   VPCId:
     Description: VPC to create the security group into

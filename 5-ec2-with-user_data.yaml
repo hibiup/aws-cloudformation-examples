@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "Create EC2 with user data"
-
+---
 Parameters:
   InstanceTypeParameter:
     Description: Select instance type
@@ -27,13 +27,13 @@ Resources:
               apt-get install apache2 -y
               mkdir /home/ubuntu/${DirName}
             - {DirName: !Join ['-', [!Ref AWS::StackName, !Ref AWS::Region, 'app' ] ] }
-      KeyName: 
-        Ref: ImportedKeyPair
       SecurityGroups:
         - !Ref SSHSecurityGroup
         - !Ref ServerSecurityGroup
+      KeyName: 
+        Ref: ImportedKeyPair
 
-  #
+  # Run `ssh-keygen` to generate key pair
   ImportedKeyPair:
     Type: AWS::EC2::KeyPair
     Properties:
