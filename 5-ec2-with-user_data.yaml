@@ -13,7 +13,7 @@ Parameters:
     Description: Available options are t2.micro, t2.small, t2.large. Default is t2.micro
 
 Resources:
-  Instance:
+  MyInstance:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: !Ref InstanceTypeParameter
@@ -24,6 +24,50 @@ Resources:
             - |
               #!/bin/bash
               apt-get update -y
-              apt-get install httpd -y
+              apt-get install apache2 -y
               mkdir /home/ubuntu/${DirName}
             - {DirName: !Join ['-', [!Ref AWS::StackName, !Ref AWS::Region, 'app' ] ] }
+      KeyName: 
+        Ref: ImportedKeyPair
+      SecurityGroups:
+        - !Ref SSHSecurityGroup
+        - !Ref ServerSecurityGroup
+
+  #
+  ImportedKeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: NameForMyImportedKeyPair
+      PublicKeyMaterial: <ssh-rsa public_key email@address.com>
+
+  # an elastic IP for our instance
+  MyEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref MyInstance
+
+  # our EC2 security group
+  SSHSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: 22
+        IpProtocol: tcp
+        ToPort: 22
+
+  # our second EC2 security group
+  ServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable secure access via http
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        CidrIp: 192.168.1.1/32
