@@ -1,6 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: A simple EC2 instance
----
+
+# 3. Import the 'ManagementSecurityGroup', which exported from the previous step, as the srcurity group.
 Resources:
   MyInstance:
     Type: AWS::EC2::Instance
@@ -9,4 +10,4 @@ Resources:
       ImageId: ami-06878d265978313ca
       InstanceType: t2.micro
       SecurityGroups:
-        - !ImportValue DefaultSSHSecurityGroup
+        - !ImportValue ManagementSecurityGroup

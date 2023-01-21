@@ -1,6 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: A simple EC2 instance
----
+
+# 1. Define a security group 'SSHSecurityGroup' for SSH login purpose
 Resources:
   SSHSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -12,9 +13,10 @@ Resources:
         IpProtocol: tcp
         ToPort: 22
 
+# 2. Export the 'SSHSecurityGroup' as 'ManagementSecurityGroup' which will be imported in the next step.
 Outputs:
   StackSSHSecurityGroup:
     Description: The SSH Security Group for ssh
     Value: !Ref SSHSecurityGroup
     Export:
-      Name: DefaultSSHSecurityGroup
+      Name: ManagementSecurityGroup
