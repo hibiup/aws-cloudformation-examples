@@ -1,9 +1,11 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: A simple EC2 instance
----
+
+# Reference: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-cli-creating-stack.html
+# --parameters ParameterKey=PublicKey,ParameterValue="ssh-rsa AAAAB3NzaC... email@address.com"
 Parameters:
-  SecurityGroupDescription:
-    Description: Security Group Description
+  PublicKey:
+    Description: Input public key
     Type: String
 
 Resources:
@@ -19,12 +21,12 @@ Resources:
       KeyName: 
         Ref: ImportedKeyPair
 
-  # Run `ssh-keygen` to generate key pair
+  #
   ImportedKeyPair:
     Type: AWS::EC2::KeyPair
     Properties:
       KeyName: NameForMyImportedKeyPair
-      PublicKeyMaterial: <ssh-rsa public_key email@address.com>
+      PublicKeyMaterial: !Ref PublicKey
 
   # an elastic IP for our instance
   MyEIP:
@@ -47,7 +49,7 @@ Resources:
   ServerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: !Ref SecurityGroupDescription
+      GroupDescription: Service ports
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: 80
