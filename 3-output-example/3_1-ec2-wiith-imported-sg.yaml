@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: A simple EC2 instance
 
-# 3. Import the 'ManagementSecurityGroup', which exported from the previous step, as the srcurity group.
+# 3. Import the 'ManagementSecurityGroup', which exported from the previous step, as the security group.
 Resources:
   MyInstance:
     Type: AWS::EC2::Instance
