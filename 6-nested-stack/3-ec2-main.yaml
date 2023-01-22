@@ -3,10 +3,10 @@ Description: "Create EC2 with user data"
 
 Parameters:
   # Get the URL of the first template.
-  NestedStackURL:
+  NestedSgStackURL:
     Type: String
     # Default: https://s3.us-east-1.amazonaws.com/cf-templates-jjcrojr9rwmf-us-east-1/2023-01-22T053713.193Zz9r-1-nested-sg.yaml
-  VolumeStackURL:
+  NestedVolumeStackURL:
     Type: String
     # Default: https://s3.us-east-1.amazonaws.com/cf-templates-jjcrojr9rwmf-us-east-1/2023-01-22T063216.668Zrqb-2-nested-volume.yaml
   EnvType:
@@ -30,13 +30,13 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       # URL of the nested stack template
-      TemplateURL: !Ref NestedStackURL
+      TemplateURL: !Ref NestedSgStackURL
 
   VolumeStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       # URL of the nested stack template
-      TemplateURL: !Ref VolumeStackURL
+      TemplateURL: !Ref NestedVolumeStackURL
       Parameters:
         # Requested by `DataVolume` and `MountPoint` in the nested-volume.yaml
         HostInstanceId: !Ref MyInstance
