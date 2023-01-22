@@ -2,35 +2,41 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: "Create EC2 with user data"
 
 Parameters:
-  InstanceTypeParameter:
-    Description: Select instance type
+  EnvType:
     Type: String
-    Default: t2.micro
+    Default: "Dev"
     AllowedValues:
-      - t2.micro
-      - t2.small
-      - t2.large
-    Description: Available options are t2.micro, t2.small, t2.large. Default is t2.micro
+      - "Prod"
+      - "Dev"
   PublicKey:
     Description: Input public key
     Type: String
     NoEcho: true
 
+Conditions:
+  # If first argument(!Ref EnvType) equals "Prod", return true, otherwise return false.
+  IsProduction: !Equals [!Ref EnvType, "Prod"] 
+
 Resources:
   MyInstance:
     Type: AWS::EC2::Instance
     Properties:
-      InstanceType: !Ref InstanceTypeParameter
+      InstanceType:
+        # If 'CreateLargeSize' condition is true, return `t2.large` else 't2.micro'
+        'Fn::If':
+          - IsProduction
+          - 't2.large'
+          - 't2.micro'
       ImageId: ami-06878d265978313ca
       UserData:
         Fn::Base64:
-          !Sub
+          !Sub  # Sub: Replace placeholder ${DirName} with `AWS::StackName`-`AWS:Region`-app
             - |
               #!/bin/bash
               apt-get update -y
               apt-get install apache2 -y
-              mkdir /home/ubuntu/${DirName}
-            - {DirName: !Join ['-', [!Ref AWS::StackName, !Ref AWS::Region, 'app' ] ] }
+              mkdir -p /data/${DirName}
+            - {DirName: !Join ['-', [!Ref AWS::StackName, !Ref AWS::Region, 'app']]}
       SecurityGroups:
         - !Ref SSHSecurityGroup
         - !Ref ServerSecurityGroup
@@ -75,6 +81,21 @@ Resources:
         FromPort: 443
         ToPort: 443
         CidrIp: 192.168.1.1/32
+  
+  # Storage
+  DataVolume:
+    Type: AWS::EC2::Volume
+    Properties:
+      Size: 100
+      AvailabilityZone:
+        !GetAtt MyInstance.AvailabilityZone
+
+  MountPoint:
+    Type: AWS::EC2::VolumeAttachment
+    Properties:
+      InstanceId: !Ref MyInstance
+      VolumeId: !Ref DataVolume
+      Device: /dev/sdh
 
 Outputs:
   PublicIp:

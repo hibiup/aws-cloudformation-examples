@@ -1,30 +1,53 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: A simple EC2 instance
 
-# Reference: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-cli-creating-stack.html
-# --parameters ParameterKey=InstanceTypeParameter,ParameterValue=t2.small ParameterKey=PublicKey,ParameterValue="ssh-rsa AAAAB3NzaC... email@address.com"
+# --parameters ParameterKey=PublicKey,ParameterValue="ssh-rsa AAAAB3NzaC... email@address.com"
 Parameters:
-  InstanceTypeParameter:
-    Description: Select instance type
+  EnvType:
     Type: String
-    Default: t2.micro
+    Default: "Dev"
     AllowedValues:
-      - t2.micro
-      - t2.small
-      - t2.large
-    Description: Available options are t2.micro, t2.small, t2.large. Default is t2.micro
+      - "Prod"
+      - "Dev"
+    Description: Control the instance size, false will be t2.micro, or true will be t2.large. Default is false
   PublicKey:
     Description: Input public key
     Type: String
     NoEcho: true
+  InstructionFamily:
+    Description: Select instance type
+    Type: String
+    Default: amd
+    AllowedValues:
+      - amd
+      - arm
+    Description: Available options are t2.micro, t2.small, t2.large. Default is t2.micro
+
+Conditions:
+  # If first argument(!Ref EnvType) equals "Prod", return true, otherwise return false.
+  CreateLargeSize: !Equals [!Ref EnvType, "Prod"] 
+
+Mappings:
+  RegionMap:
+    us-east-1:
+      "arm": "ami-01625be155ee390e9"
+      "amd": "ami-06878d265978313ca"
+    us-west-2:
+      "arm": "ami-072d13a1cd84b5f6b"
+      "amd": "ami-095413544ce52437d"
 
 Resources:
   MyInstance:
     Type: AWS::EC2::Instance
     Properties:
       AvailabilityZone: us-east-1a
-      ImageId: ami-06878d265978313ca
-      InstanceType: !Ref InstanceTypeParameter
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", !Ref InstructionFamily]
+      InstanceType:
+        # If 'CreateLargeSize' condition is true, return `t2.large` else 't2.micro'
+        'Fn::If':
+          - CreateLargeSize
+          - 't2.large'
+          - 't2.micro'
       SecurityGroups:
         - !Ref SSHSecurityGroup
         - !Ref ServerSecurityGroup
