@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Create EC2 with user data"
+
+Parameters:
+  # Get the URL of the first template.
+  NestedStackURL:
+    Type: String
+    # Default: https://s3.us-east-1.amazonaws.com/cf-templates-jjcrojr9rwmf-us-east-1/2023-01-22T053713.193Zz9r-1-nested-sg.yaml
+  VolumeStackURL:
+    Type: String
+    # Default: https://s3.us-east-1.amazonaws.com/cf-templates-jjcrojr9rwmf-us-east-1/2023-01-22T063216.668Zrqb-2-nested-volume.yaml
+  EnvType:
+    Type: String
+    Default: "Dev"
+    AllowedValues:
+      - "Prod"
+      - "Dev"
+  PublicKey:
+    Description: Input public key
+    Type: String
+    NoEcho: true
+
+Conditions:
+  # If first argument(!Ref EnvType) equals "Prod", return true, otherwise return false.
+  IsProduction: !Equals [!Ref EnvType, "Prod"] 
+
+Resources:
+  # Nested stack
+  NestedSgStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      # URL of the nested stack template
+      TemplateURL: !Ref NestedStackURL
+
+  VolumeStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      # URL of the nested stack template
+      TemplateURL: !Ref VolumeStackURL
+      Parameters:
+        # Requested by `DataVolume` and `MountPoint` in the nested-volume.yaml
+        HostInstanceId: !Ref MyInstance
+        AvailabilityZone: !GetAtt MyInstance.AvailabilityZone
+
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType:
+        # If 'CreateLargeSize' condition is true, return `t2.large` else 't2.micro'
+        'Fn::If':
+          - IsProduction
+          - 't2.large'
+          - 't2.micro'
+      ImageId: ami-06878d265978313ca
+      UserData:
+        Fn::Base64:
+          !Sub  # Sub: Replace placeholder ${DirName} with `AWS::StackName`-`AWS:Region`-app
+            - |
+              #!/bin/bash
+              apt-get update -y
+              apt-get install apache2 -y
+              mkdir -p /data/${DirName}
+            - {DirName: !Join ['-', [!Ref AWS::StackName, !Ref AWS::Region, 'app']]}
+      SecurityGroups:
+        #- !Ref SSHSecurityGroup
+        #- !Ref ServerSecurityGroup
+        - !GetAtt NestedSgStack.Outputs.ManagementSg
+        - !GetAtt NestedSgStack.Outputs.ServiceSg
+      KeyName:
+        Ref: ImportedKeyPair
+
+  # Run `ssh-keygen` to generate key pair
+  ImportedKeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: NameForMyImportedKeyPair
+      PublicKeyMaterial: !Ref PublicKey
+
+  # an elastic IP for our instance
+  MyEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref MyInstance
+
+Outputs:
+  PublicIp:
+    Description: 'Public IP address'
+    Value: !GetAtt MyEIP.PublicIp
+    #Export:
+    #  Name: "PublicIpAddress"
