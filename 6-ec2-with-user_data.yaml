@@ -75,3 +75,10 @@ Resources:
         FromPort: 443
         ToPort: 443
         CidrIp: 192.168.1.1/32
+
+Outputs:
+  PublicIp:
+    Description: 'Public IP address'
+    Value: !GetAtt MyEIP.PublicIp
+    #Export:
+    #  Name: "PublicIpAddress"
