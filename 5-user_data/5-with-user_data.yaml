@@ -35,7 +35,7 @@ Resources:
               #!/bin/bash
               apt-get update -y
               apt-get install apache2 -y
-              mkdir -p /data/${DirName}
+              mkdir -p /home/ubuntu/${DirName}
             - {DirName: !Join ['-', [!Ref AWS::StackName, !Ref AWS::Region, 'app']]}
       SecurityGroups:
         - !Ref SSHSecurityGroup
